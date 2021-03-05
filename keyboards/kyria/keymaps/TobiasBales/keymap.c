@@ -38,9 +38,9 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
  *                        `----------------------------------'  `----------------------------------'
  */
     [_QWERTY] = LAYOUT(
-      KC_NO,    KC_Q, KC_W, KC_E,  KC_R,    KC_T,                                                          KC_Y,                 KC_U,  KC_I,    KC_O,    KC_P,    KC_EQUAL,
-      KC_LCTL, KC_A, KC_S, KC_D,  KC_F,    KC_G,                                                          KC_H,                 KC_J,  KC_K,    KC_L,    KC_SCLN, KC_QUOT,
-      KC_LSFT,  KC_Z, KC_X, KC_C,  KC_V,    KC_B,                 KC_NO,     KC_NO,        KC_NO,  KC_ESC, KC_N,                 KC_M,  KC_COMM, KC_DOT,  KC_SLSH, KC_MINS,
+      KC_EQUAL, KC_Q, KC_W, KC_E,  KC_R,    KC_T,                                                          KC_Y,                 KC_U,  KC_I,    KC_O,    KC_P,    KC_MINS,
+      KC_LCTL,  KC_A, KC_S, KC_D,  KC_F,    KC_G,                                                          KC_H,                 KC_J,  KC_K,    KC_L,    KC_SCLN, KC_QUOT,
+      KC_LSFT,  KC_Z, KC_X, KC_C,  KC_V,    KC_B,                 KC_NO,     KC_NO,        KC_NO,  KC_ESC, KC_N,                 KC_M,  KC_COMM, KC_DOT,  KC_SLSH, KC_LSFT,
                             KC_NO, KC_LALT, LT(_SYMBOLS, KC_SPC), KC_BSPACE, KC_LGUI,      KC_TAB, KC_NO,  LT(_NUMBERS, KC_ENT), KC_NO, KC_NO
     ),
 /*
@@ -58,10 +58,10 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
  *                        `----------------------------------'  `----------------------------------'
  */
     [_SYMBOLS] = LAYOUT(
-      KC_NO, KC_EXLM, KC_AT,   KC_LCBR, KC_RCBR, KC_PIPE,                                    KC_PLUS, KC_MINS, KC_ASTR, KC_AMPR, KC_NO,   KC_NO,
-      KC_NO, KC_HASH, KC_DLR,  KC_LPRN, KC_RPRN, KC_GRV,                                     KC_LEFT, KC_DOWN, KC_UP,   KC_RGHT, KC_NO,   KC_NO,
-      KC_NO, KC_PERC, KC_CIRC, KC_LBRC, KC_RBRC, KC_TILD, KC_NO,  KC_NO,       KC_NO, KC_NO, KC_NO,   KC_NO,   KC_NO,   KC_NO,   KC_BSLS, KC_NO,
-                               KC_NO,   _______, _______, KC_DEL, _______,     KC_NO, KC_NO, _______, _______, _______
+      KC_NO,   KC_EXLM, KC_AT,   KC_LCBR, KC_RCBR, KC_PIPE,                                    KC_PLUS, KC_MINS, KC_ASTR, KC_AMPR, KC_NO,   KC_NO,
+      _______, KC_HASH, KC_DLR,  KC_LPRN, KC_RPRN, KC_GRV,                                     KC_LEFT, KC_DOWN, KC_UP,   KC_RGHT, KC_NO,   KC_NO,
+      _______, KC_PERC, KC_CIRC, KC_LBRC, KC_RBRC, KC_TILD, KC_NO,  KC_NO,       KC_NO, KC_NO, KC_NO,   KC_NO,   KC_NO,   KC_NO,   KC_BSLS, _______,
+                                 KC_NO,   _______, _______, KC_DEL, _______,     KC_NO, KC_NO, _______, KC_NO,   KC_NO
     ),
 /*
  * Raise Layer: Number keys, media, navigation
