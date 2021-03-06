@@ -29,5 +29,9 @@
 #endif
 
 // If you are using an Elite C rev3 on the slave side, uncomment the lines below:
-// #define SPLIT_USB_DETECT
-// #define NO_USB_STARTUP_CHECK
+#define SPLIT_USB_DETECT
+#define NO_USB_STARTUP_CHECK
+#define MASTER_RIGHT
+
+#define PIMORONI_TRACKBALL_ROTATE 1
+#define PIMORONI_TRACKBALL_INVERT_Y 1

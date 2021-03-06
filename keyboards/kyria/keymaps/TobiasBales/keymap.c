@@ -14,13 +14,21 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include QMK_KEYBOARD_H
+#include "pimoroni_trackball.h"
+#include "print.h"
 
 enum layers {
     _QWERTY = 0,
     _SYMBOLS,
     _NUMBERS,
-    _ADJUST
+    _MEDIA,
+    _MOUSE
 };
+
+//enum custom_keycodes {
+//  PM_SCROLL = SAFE_RANGE,
+//  PM_PRECISION
+//};
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 /*
@@ -97,12 +105,33 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
  *                        |      |      |      |      |      |  |      |      |      |      |      |
  *                        `----------------------------------'  `----------------------------------'
  */
-    [_ADJUST] = LAYOUT(
+    [_MEDIA] = LAYOUT(
       KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,                                        KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,
       KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,                                        KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,
       KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,     KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,
                            KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,     KC_NO, KC_NO, KC_NO, KC_NO, KC_NO
     ),
+
+ /*
+  * Mouse layer
+  *
+  * ,-------------------------------------------.                              ,-------------------------------------------.
+  * |        |      |      |      |      |      |                              |      |      |      |      |      |        |
+  * |--------+------+------+------+------+------|                              |------+------+------+------+------+--------|
+  * |        |      |      |      |      |      |                              |      |      |      |      |      |        |
+  * |--------+------+------+------+------+------+-------------.  ,-------------+------+------+------+------+------+--------|
+  * |        |      |      |      |      |      |      |      |  |      |      |      |      |      |      |      |        |
+  * `----------------------+------+------+------+------+------|  |------+------+------+------+------+----------------------'
+  *                        |      |      |      |      |      |  |      |      |      |      |      |
+  *                        |      |      |      |      |      |  |      |      |      |      |      |
+  *                        `----------------------------------'  `----------------------------------'
+  */
+//     [_MOUSE] = LAYOUT(
+//       _______, _______,   _______,      _______, _______, _______,                                     _______, _______, _______, _______, _______, _______,
+//       _______, PM_SCROLL, PM_PRECISION, KC_BTN2, KC_BTN1, _______,                                     _______, _______, _______, _______, _______, _______,
+//       _______, _______,   _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______,
+//                                         _______, _______, _______, _______, _______, _______, _______, _______, _______, _______
+//     ),
 // /*
 //  * Layer template
 //  *
@@ -126,7 +155,12 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 };
 
 layer_state_t layer_state_set_user(layer_state_t state) {
-    return update_tri_layer_state(state, _SYMBOLS, _NUMBERS, _ADJUST);
+    return update_tri_layer_state(state, _SYMBOLS, _NUMBERS, _MEDIA);
+}
+
+void keyboard_post_init_user(void) {
+  print("post init\n");
+  trackball_set_rgbw(0x00, 0x00, 0x00, 0x4F);
 }
 
 #ifdef OLED_DRIVER_ENABLE
@@ -174,8 +208,11 @@ static void render_status(void) {
         case _NUMBERS:
             oled_write_P(PSTR("Numbers\n"), false);
             break;
-        case _ADJUST:
-            oled_write_P(PSTR("Adjust\n"), false);
+        case _MEDIA:
+            oled_write_P(PSTR("Media\n"), false);
+            break;
+        case _MOUSE:
+            oled_write_P(PSTR("Mouse\n"), false);
             break;
         default:
             oled_write_P(PSTR("Undefined\n"), false);
