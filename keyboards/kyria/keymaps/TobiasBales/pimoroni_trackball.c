@@ -24,6 +24,7 @@ static int16_t x_offset       = 0;
 static int16_t y_offset       = 0;
 static int16_t h_offset       = 0;
 static int16_t v_offset       = 0;
+static uint8_t mods = 0;
 static float precisionSpeed   = 1;
 
 #ifndef I2C_TIMEOUT
@@ -32,6 +33,54 @@ static float precisionSpeed   = 1;
 #ifndef MOUSE_DEBOUNCE
     #define MOUSE_DEBOUNCE 5
 #endif
+
+void trackball_read_state(uint8_t* data, uint16_t size_of_data) {
+    i2c_readReg(TRACKBALL_WRITE, REG_LEFT, data, size_of_data, TB_I2C_TIMEOUT);
+}
+
+trackball_state_t trackball_get_state(void) {
+    // up down left right button
+    uint8_t s[5] = {};
+    trackball_read_state(s, 5);
+
+    trackball_state_t state = {
+#if TRACKBALL_ORIENTATION == 0
+        // Pimoroni text is up
+        .y = s[0] - s[1],
+        .x = s[3] - s[2],
+#elif TRACKBALL_ORIENTATION == 1
+        // Pimoroni text is right
+        .y = s[3] - s[2],
+        .x = s[1] - s[0],
+#elif TRACKBALL_ORIENTATION == 2
+        // Pimoroni text is down
+        .y = s[1] - s[0],
+        .x = s[2] - s[3],
+#else
+        // Pimoroni text is left
+        .y = s[2] - s[3],
+        .x = s[0] - s[1],
+#endif
+        .button_down = s[4] & 0x80,
+        .button_triggered = s[4] & 0x01,
+};
+
+#ifndef TRACKBALL_NO_MATH
+    state.angle_rad = atan2(state.y, state.x) + TRACKBALL_ANGLE_OFFSET;
+    state.vector_length = sqrt(pow(state.x, 2) + pow(state.y, 2));
+    state.raw_x = state.x;
+    state.raw_y = state.y;
+    state.x = (int16_t)(state.vector_length * cos(state.angle_rad));
+    state.y = (int16_t)(state.vector_length * sin(state.angle_rad));
+#endif
+
+#ifdef PIMORONI_TRACKBALL_INVERT_Y
+    state.y = -state.y;
+#endif
+
+    return state;
+}
+
 
 void trackball_set_rgbw(uint8_t red, uint8_t green, uint8_t blue, uint8_t white) {
     uint8_t data[] = {0x00, red, green, blue, white};
@@ -93,59 +142,32 @@ bool has_report_changed (report_mouse_t first, report_mouse_t second) {
 __attribute__((weak)) void pointing_device_init(void) { trackball_set_rgbw(0x00, 0x00, 0x00, 0x4F); }
 
 void pointing_device_task(void) {
-    static bool     debounce;
-    static uint16_t debounce_timer;
-    uint8_t         state[5] = {};
-    if (i2c_readReg(TRACKBALL_WRITE, 0x04, state, 5, I2C_TIMEOUT) == I2C_STATUS_SUCCESS) {
-        if (!state[4] && !debounce) {
-            if (scrolling) {
-#ifdef PIMORONI_TRACKBALL_INVERT_X
-                h_offset += mouse_offset(state[2], state[3], 1);
-#else
-                h_offset -= mouse_offset(state[2], state[3], 1);
-#endif
-#ifdef PIMORONI_TRACKBALL_INVERT_Y
-                v_offset += mouse_offset(state[1], state[0], 1);
-#else
-                v_offset -= mouse_offset(state[1], state[0], 1);
-#endif
-            } else {
-#ifdef PIMORONI_TRACKBALL_INVERT_X
-                x_offset -= mouse_offset(state[2], state[3], 5);
-#else
-                x_offset += mouse_offset(state[2], state[3], 5);
-#endif
-#ifdef PIMORONI_TRACKBALL_INVERT_Y
-                y_offset -= mouse_offset(state[1], state[0], 5);
-#else
-                y_offset += mouse_offset(state[1], state[0], 5);
-#endif
-            }
+    trackball_state_t state = trackball_get_state();
+    if (state.x || state.y) {
+        if (scrolling) {
+            h_offset += state.x;
+            v_offset -= state.y;
         } else {
-            if (state[4]) {
-                debounce       = true;
-                debounce_timer = timer_read();
+            mods = get_mods();
+            uint8_t scale = 4;
+            if (mods & MOD_MASK_CTRL) {
+                scale = 2;
             }
+            x_offset += state.x * state.x * SIGN(state.x) * scale;
+            y_offset += state.y * state.y * SIGN(state.y) * scale;
         }
     }
 
-    if (timer_elapsed(debounce_timer) > MOUSE_DEBOUNCE) debounce = false;
-
     report_mouse_t mouse = pointing_device_get_report();
 
-    trackball_check_click(state[4] & (1 << 7), &mouse);
+    trackball_check_click(state.button_down, &mouse);
 
-#ifndef PIMORONI_TRACKBALL_ROTATE
     update_member(&mouse.x, &x_offset);
     update_member(&mouse.y, &y_offset);
     update_member(&mouse.h, &h_offset);
     update_member(&mouse.v, &v_offset);
-#else
-    update_member(&mouse.x, &y_offset);
-    update_member(&mouse.y, &x_offset);
-    update_member(&mouse.h, &v_offset);
-    update_member(&mouse.v, &h_offset);
-#endif
+
+
     pointing_device_set_report(mouse);
     if (has_report_changed(mouse, pointing_device_get_report())) {
         pointing_device_send();

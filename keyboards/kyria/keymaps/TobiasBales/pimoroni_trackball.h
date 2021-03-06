@@ -20,10 +20,26 @@
 #include "pointing_device.h"
 
 #ifndef TRACKBALL_ADDRESS
-#define TRACKBALL_ADDRESS 0x0A
+    #define TRACKBALL_ADDRESS 0x0A
 #endif
+
+#ifndef TRACKBALL_ANGLE_OFFSET
+#   define TRACKBALL_ANGLE_OFFSET 0
+#endif
+
 #define TRACKBALL_WRITE ((TRACKBALL_ADDRESS << 1) | I2C_WRITE)
 #define TRACKBALL_READ ((TRACKBALL_ADDRESS << 1) | I2C_READ)
+
+#define TB_I2C_TIMEOUT 100
+
+#define SIGN(x) ((x > 0) - (x < 0))
+
+#define REG_RED 0x00
+#define REG_GREEN 0x01
+#define REG_BLUE 0x02
+#define REG_WHITE 0x03
+
+#define REG_LEFT 0x04
 
 void trackball_set_rgbw(uint8_t red, uint8_t green, uint8_t blue, uint8_t white);
 void trackball_check_click(bool pressed, report_mouse_t *mouse);
@@ -33,3 +49,16 @@ float trackball_get_precision(void);
 void  trackball_set_precision(float precision);
 bool  trackball_is_scrolling(void);
 void  trackball_set_scrolling(bool scroll);
+
+typedef struct {
+    int16_t x;
+    int16_t y;
+    bool button_down;
+    bool button_triggered;
+#ifndef TRACKBALL_NO_MATH
+    double vector_length;
+    double angle_rad;
+    int8_t raw_x;
+    int8_t raw_y;
+#endif
+} trackball_state_t;
