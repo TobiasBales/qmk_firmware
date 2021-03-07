@@ -24,8 +24,16 @@ static int16_t x_offset       = 0;
 static int16_t y_offset       = 0;
 static int16_t h_offset       = 0;
 static int16_t v_offset       = 0;
-static uint8_t mods = 0;
-static float precisionSpeed   = 1;
+static bool precisionMode  = false;
+static int16_t mouse_auto_layer_timer = 0;
+#define MOUSE_TIMEOUT 600
+#define TRACKBALL_TIMEOUT 5
+
+static uint8_t mouse_layer    = 0;
+
+void trackball_set_mouse_layer(uint8_t layer) {
+    mouse_layer = layer;
+}
 
 #ifndef I2C_TIMEOUT
      #define I2C_TIMEOUT 100
@@ -33,6 +41,17 @@ static float precisionSpeed   = 1;
 #ifndef MOUSE_DEBOUNCE
     #define MOUSE_DEBOUNCE 5
 #endif
+
+void trackball_process_matrix_scan(void) {
+    if (mouse_auto_layer_timer && timer_elapsed(mouse_auto_layer_timer) > MOUSE_TIMEOUT) {
+        report_mouse_t rep = pointing_device_get_report();
+        if (rep.buttons) {
+            return;
+        }
+        layer_off(mouse_layer);
+        mouse_auto_layer_timer = 0;
+    }
+}
 
 void trackball_read_state(uint8_t* data, uint16_t size_of_data) {
     i2c_readReg(TRACKBALL_WRITE, REG_LEFT, data, size_of_data, TB_I2C_TIMEOUT);
@@ -87,12 +106,6 @@ void trackball_set_rgbw(uint8_t red, uint8_t green, uint8_t blue, uint8_t white)
     i2c_transmit(TRACKBALL_WRITE, data, sizeof(data), I2C_TIMEOUT);
 }
 
-int16_t mouse_offset(uint8_t positive, uint8_t negative, int16_t scale) {
-    int16_t offset    = (int16_t)positive - (int16_t)negative;
-    int16_t magnitude = (int16_t)(scale * offset * offset * precisionSpeed);
-    return offset < 0 ? -magnitude : magnitude;
-}
-
 void update_member(int8_t* member, int16_t* offset) {
     if (*offset > 127) {
         *member = 127;
@@ -114,7 +127,7 @@ __attribute__((weak)) void trackball_check_click(bool pressed, report_mouse_t* m
     }
 }
 
-void trackball_register_button(bool pressed, enum mouse_buttons button) {
+void trackball_register_button(bool pressed, uint8_t button) {
     report_mouse_t currentReport = pointing_device_get_report();
     if (pressed) {
         currentReport.buttons |= button;
@@ -124,8 +137,8 @@ void trackball_register_button(bool pressed, enum mouse_buttons button) {
     pointing_device_set_report(currentReport);
 }
 
-float trackball_get_precision(void) { return precisionSpeed; }
-void  trackball_set_precision(float precision) { precisionSpeed = precision; }
+float trackball_get_precision(void) { return precisionMode; }
+void  trackball_set_precision(bool precision) { precisionMode = precision; }
 bool  trackball_is_scrolling(void) { return scrolling; }
 void  trackball_set_scrolling(bool scroll) { scrolling = scroll; }
 
@@ -148,9 +161,13 @@ void pointing_device_task(void) {
             h_offset += state.x;
             v_offset -= state.y;
         } else {
-            mods = get_mods();
+            if (!mouse_auto_layer_timer) {
+                layer_on(mouse_layer);
+            }
+            mouse_auto_layer_timer = timer_read() | 1;
+
             uint8_t scale = 4;
-            if (mods & MOD_MASK_CTRL) {
+            if (precisionMode) {
                 scale = 2;
             }
             x_offset += state.x * state.x * SIGN(state.x) * scale;
@@ -159,8 +176,9 @@ void pointing_device_task(void) {
     }
 
     report_mouse_t mouse = pointing_device_get_report();
-
-    trackball_check_click(state.button_down, &mouse);
+    // this currently collides with mouse presses via keys,
+    // need to find a better solution for this
+    // trackball_check_click(state.button_down, &mouse);
 
     update_member(&mouse.x, &x_offset);
     update_member(&mouse.y, &y_offset);

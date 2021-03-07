@@ -25,10 +25,12 @@ enum layers {
     _MOUSE
 };
 
-//enum custom_keycodes {
-//  PM_SCROLL = SAFE_RANGE,
-//  PM_PRECISION
-//};
+enum custom_keycodes {
+  PM_SCROLL = SAFE_RANGE,
+  PM_PRECISION,
+  PM_LEFT_CLICK,
+  PM_RIGHT_CLICK
+};
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 /*
@@ -126,12 +128,12 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   *                        |      |      |      |      |      |  |      |      |      |      |      |
   *                        `----------------------------------'  `----------------------------------'
   */
-//     [_MOUSE] = LAYOUT(
-//       _______, _______,   _______,      _______, _______, _______,                                     _______, _______, _______, _______, _______, _______,
-//       _______, PM_SCROLL, PM_PRECISION, KC_BTN2, KC_BTN1, _______,                                     _______, _______, _______, _______, _______, _______,
-//       _______, _______,   _______,      _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______,
-//                                         _______, _______, _______, _______, _______, _______, _______, _______, _______, _______
-//     ),
+     [_MOUSE] = LAYOUT(
+       _______, _______,   _______,      _______,        _______,       _______,                                     _______, _______, _______, _______, _______, _______,
+       _______, PM_SCROLL, PM_PRECISION, PM_RIGHT_CLICK, PM_LEFT_CLICK, _______,                                     _______, _______, _______, _______, _______, _______,
+       _______, _______,   _______,      _______,        _______,       _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______,
+                                         _______,        _______,       _______, _______, _______, _______, _______, _______, _______, _______
+     ),
 // /*
 //  * Layer template
 //  *
@@ -154,13 +156,51 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 //     ),
 };
 
+void update_trackball_led_based_on_layer_state(layer_state_t state) {
+    uint8_t layer = get_highest_layer(state);
+    switch(layer) {
+        case _MOUSE:
+            trackball_set_rgbw(0, 0, TRACKBALL_BRIGHTNESS, 0);
+            break;
+        default:
+            trackball_set_rgbw(0, 0, 0, TRACKBALL_BRIGHTNESS);
+            break;
+    }
+}
+
 layer_state_t layer_state_set_user(layer_state_t state) {
-    return update_tri_layer_state(state, _SYMBOLS, _NUMBERS, _MEDIA);
+    layer_state_t new_state = update_tri_layer_state(state, _SYMBOLS, _NUMBERS, _MEDIA);
+    update_trackball_led_based_on_layer_state(new_state);
+
+    return new_state;
 }
 
 void keyboard_post_init_user(void) {
-  print("post init\n");
-  trackball_set_rgbw(0x00, 0x00, 0x00, 0x4F);
+  trackball_set_rgbw(0x00, 0x00, 0x00, TRACKBALL_BRIGHTNESS);
+  trackball_set_mouse_layer(_MOUSE);
+}
+
+void matrix_scan_user(void) {
+    trackball_process_matrix_scan();
+}
+
+bool process_record_user(uint16_t keycode, keyrecord_t *record) {
+    switch (keycode) {
+        case PM_PRECISION:
+            trackball_set_precision(record->event.pressed);
+            return false;
+        case PM_SCROLL:
+            trackball_set_scrolling(record->event.pressed);
+            return false;
+        case PM_LEFT_CLICK:
+            trackball_register_button(record->event.pressed, MOUSE_BTN1);
+            return false;
+        case PM_RIGHT_CLICK:
+            trackball_register_button(record->event.pressed, MOUSE_BTN2);
+            return false;
+        default:
+            return true;
+    }
 }
 
 #ifdef OLED_DRIVER_ENABLE

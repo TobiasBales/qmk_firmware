@@ -24,7 +24,7 @@
 #endif
 
 #ifndef TRACKBALL_ANGLE_OFFSET
-#   define TRACKBALL_ANGLE_OFFSET 0
+    #define TRACKBALL_ANGLE_OFFSET 0
 #endif
 
 #define TRACKBALL_WRITE ((TRACKBALL_ADDRESS << 1) | I2C_WRITE)
@@ -43,12 +43,15 @@
 
 void trackball_set_rgbw(uint8_t red, uint8_t green, uint8_t blue, uint8_t white);
 void trackball_check_click(bool pressed, report_mouse_t *mouse);
-void trackball_register_button(bool pressed, enum mouse_buttons button);
+void trackball_register_button(bool pressed, uint8_t button);
 
 float trackball_get_precision(void);
-void  trackball_set_precision(float precision);
+void  trackball_set_precision(bool precision);
 bool  trackball_is_scrolling(void);
 void  trackball_set_scrolling(bool scroll);
+
+void trackball_set_mouse_layer(uint8_t layer);
+void trackball_process_matrix_scan(void);
 
 typedef struct {
     int16_t x;
