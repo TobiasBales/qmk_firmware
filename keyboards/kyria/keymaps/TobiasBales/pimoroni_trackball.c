@@ -187,11 +187,9 @@ void pointing_device_task(void) {
     }
 
     report_mouse_t mouse = pointing_device_get_report();
-    // this currently collides with mouse presses via keys,
-    // need to find a better solution for this
-#ifndef TRACKBALL_MOUSE_LAYER
-     trackball_check_click(state.button_down, &mouse);
-#endif
+    if (state.button_triggered) {
+        trackball_check_click(state.button_down, &mouse);
+     }
 
     update_member(&mouse.x, &x_offset);
     update_member(&mouse.y, &y_offset);
