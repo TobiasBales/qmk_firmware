@@ -25,25 +25,25 @@ static int16_t y_offset       = 0;
 static int16_t h_offset       = 0;
 static int16_t v_offset       = 0;
 static bool precisionMode  = false;
-static int16_t mouse_auto_layer_timer = 0;
-#define MOUSE_TIMEOUT 600
-#define TRACKBALL_TIMEOUT 5
 
-static uint8_t mouse_layer    = 0;
 
-void trackball_set_mouse_layer(uint8_t layer) {
-    mouse_layer = layer;
-}
+#ifdef TRACKBALL_MOUSE_LAYER
+    #define MOUSE_LAYER_TIMEOUT 600
+    static int16_t mouse_auto_layer_timer = 0;
+    static uint8_t mouse_layer    = 0;
+
+    void trackball_set_mouse_layer(uint8_t layer) {
+        mouse_layer = layer;
+    }
+#endif
 
 #ifndef I2C_TIMEOUT
      #define I2C_TIMEOUT 100
 #endif
-#ifndef MOUSE_DEBOUNCE
-    #define MOUSE_DEBOUNCE 5
-#endif
 
 void trackball_process_matrix_scan(void) {
-    if (mouse_auto_layer_timer && timer_elapsed(mouse_auto_layer_timer) > MOUSE_TIMEOUT) {
+#ifdef TRACKBALL_MOUSE_LAYER
+    if (mouse_auto_layer_timer && timer_elapsed(mouse_auto_layer_timer) > MOUSE_LAYER_TIMEOUT) {
         report_mouse_t rep = pointing_device_get_report();
         if (rep.buttons) {
             return;
@@ -51,6 +51,7 @@ void trackball_process_matrix_scan(void) {
         layer_off(mouse_layer);
         mouse_auto_layer_timer = 0;
     }
+#endif
 }
 
 void trackball_set_brightness(uint8_t brightness) {
@@ -173,10 +174,12 @@ void pointing_device_task(void) {
             h_offset += state.x;
             v_offset -= state.y;
         } else {
+#ifdef TRACKBALL_MOUSE_LAYER
             if (!mouse_auto_layer_timer) {
                 layer_on(mouse_layer);
             }
             mouse_auto_layer_timer = timer_read() | 1;
+#endif
 
             uint8_t scale = 8;
             if (precisionMode) {
@@ -190,7 +193,9 @@ void pointing_device_task(void) {
     report_mouse_t mouse = pointing_device_get_report();
     // this currently collides with mouse presses via keys,
     // need to find a better solution for this
-    // trackball_check_click(state.button_down, &mouse);
+#ifndef TRACKBALL_MOUSE_LAYER
+     trackball_check_click(state.button_down, &mouse);
+#endif
 
     update_member(&mouse.x, &x_offset);
     update_member(&mouse.y, &y_offset);
