@@ -106,10 +106,6 @@ trackball_state_t trackball_get_state(void) {
     state.y = (int16_t)(state.vector_length * sin(state.angle_rad));
 #endif
 
-#ifdef PIMORONI_TRACKBALL_INVERT_Y
-    state.y = -state.y;
-#endif
-
     return state;
 }
 
