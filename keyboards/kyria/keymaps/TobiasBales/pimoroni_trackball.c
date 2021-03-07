@@ -181,9 +181,9 @@ void pointing_device_task(void) {
             mouse_auto_layer_timer = timer_read() | 1;
 #endif
 
-            uint8_t scale = 8;
+            uint8_t scale = 10;
             if (precisionMode) {
-                scale = 2;
+                scale = 4;
             }
             x_offset += state.x * state.x * SIGN(state.x) * scale;
             y_offset += state.y * state.y * SIGN(state.y) * scale;
