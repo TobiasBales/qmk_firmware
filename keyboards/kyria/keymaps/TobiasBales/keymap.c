@@ -175,6 +175,10 @@ layer_state_t layer_state_set_user(layer_state_t state) {
     return new_state;
 }
 
+void suspend_power_down_user(void) {
+    trackball_set_brightness(0);
+}
+
 void keyboard_post_init_user(void) {
   trackball_set_rgbw(0x00, 0x00, 0x00, TRACKBALL_BRIGHTNESS);
   trackball_set_mouse_layer(_MOUSE);

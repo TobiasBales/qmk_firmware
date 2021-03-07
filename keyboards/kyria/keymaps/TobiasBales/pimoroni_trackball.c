@@ -53,6 +53,18 @@ void trackball_process_matrix_scan(void) {
     }
 }
 
+void trackball_set_brightness(uint8_t brightness) {
+    uint8_t data[4] = {};
+    i2c_readReg(TRACKBALL_WRITE, REG_RED, data, 4, TB_I2C_TIMEOUT);
+    for (int i=0; i<4; i++) {
+        if (data[i]) {
+            data[i] = brightness;
+        }
+    }
+    i2c_writeReg(TRACKBALL_WRITE, REG_RED, data, 4, TB_I2C_TIMEOUT);
+}
+
+
 void trackball_read_state(uint8_t* data, uint16_t size_of_data) {
     i2c_readReg(TRACKBALL_WRITE, REG_LEFT, data, size_of_data, TB_I2C_TIMEOUT);
 }

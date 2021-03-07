@@ -50,6 +50,8 @@ void  trackball_set_precision(bool precision);
 bool  trackball_is_scrolling(void);
 void  trackball_set_scrolling(bool scroll);
 
+void trackball_set_brightness(uint8_t brightness);
+
 void trackball_set_mouse_layer(uint8_t layer);
 void trackball_process_matrix_scan(void);
 
