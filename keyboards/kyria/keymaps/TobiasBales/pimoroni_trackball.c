@@ -177,7 +177,7 @@ void pointing_device_task(void) {
             mouse_auto_layer_timer = timer_read() | 1;
 #endif
 
-            uint8_t scale = 10;
+            uint8_t scale = 8;
             if (precisionMode) {
                 scale = 4;
             }
